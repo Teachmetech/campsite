@@ -67,10 +67,10 @@ import time
 import requests
 from datetime import datetime, timedelta
 
-# camp_grounds keys can be anything, this is what NTFY will use in its message
+<!-- # camp_grounds keys can be anything, this is what NTFY will use in its message
 # For example, you could use Camp Cook Campsite or camp_cook_campsite for the key
 # The value matters, however, as this is the ID of the campsite which you can find
-# in the URL when clicking on the campsite.
+# in the URL when clicking on the campsite. -->
 camp_grounds = {
     "Campground A": "123456",
     "Campground B": "789012"
