@@ -17,23 +17,19 @@ This Python script checks for campsite availability on recreation.gov and sends 
 ## Installation
 
 1. Clone the repository:
-
-    \`\`\`bash
-    git clone https://github.com/yourusername/campsite-availability-checker.git
-    cd campsite-availability-checker
-    \`\`\`
-
+```bash
+    git clone https://github.com/Teachmetech/campsite.git
+    cd campsite
+```
 2. Install the required packages:
-
-    \`\`\`bash
+```bash
     pip install -r requirements.txt
-    \`\`\`
-
+```
 ## Usage
 
 1. Define your campgrounds and dates in the script.
 
-    \`\`\`python
+```python
     camp_grounds = {
         "Campground A": "123456",
         "Campground B": "789012"
@@ -43,14 +39,14 @@ This Python script checks for campsite availability on recreation.gov and sends 
         ("2024-06-01", "2024-06-05"),
         ("2024-07-10", "2024-07-15")
     ]
-    \`\`\`
+```
 
 2. Create an instance of the `Campsite` class and call the `check_sites` method.
 
-    \`\`\`python
+```python
     campsite_checker = Campsite(camp_grounds, dates)
     campsite_checker.check_sites()
-    \`\`\`
+```
 
 ## Configuration
 
@@ -62,15 +58,16 @@ This Python script checks for campsite availability on recreation.gov and sends 
 
 ## Example
 
-\`\`\`python
+```python
 import time
 import requests
 from datetime import datetime, timedelta
 
-<!-- # camp_grounds keys can be anything, this is what NTFY will use in its message
+# camp_grounds keys can be anything, this is what NTFY will use in its message
 # For example, you could use Camp Cook Campsite or camp_cook_campsite for the key
 # The value matters, however, as this is the ID of the campsite which you can find
-# in the URL when clicking on the campsite. -->
+# in the URL when clicking on the campsite.
+
 camp_grounds = {
     "Campground A": "123456",
     "Campground B": "789012"
@@ -83,7 +80,7 @@ dates = [
 
 campsite_checker = Campsite(camp_grounds, dates)
 campsite_checker.check_sites()
-\`\`\`
+```
 
 ## License
 
