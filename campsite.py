@@ -12,7 +12,9 @@ class Campsite:
         request_headers: dict = None,
         ntfy_url: str = "https://ntfy.sh",
         ntfy_topic: str = "campsite",
+        infinite_run: bool = True,
         sleep_time: int = 60,
+        debug: bool = False,
     ):
         if not recreation_api_url:
             self.recreation_api_url = "https://www.recreation.gov/api/camps/availability/campground/{}/month?start_date={}T00%3A00%3A00.000Z"
@@ -37,7 +39,9 @@ class Campsite:
         self.dates = dates
         self.ntfy_url = ntfy_url
         self.ntfy_topic = ntfy_topic
+        self.infinite_run = infinite_run
         self.sleep_time = sleep_time
+        self.debug = debug
 
     def _parse_campgrounds(self):
         current_month = datetime.now().month
@@ -61,7 +65,8 @@ class Campsite:
         return parsed_campgrounds
 
     def check_sites(self):
-        while True:
+        infinite_run = True
+        while infinite_run:
             for camp_ground in self._parsed_camp_grounds:
                 campground_id = list(self._parsed_camp_grounds[camp_ground].keys())[0]
                 for date in self.dates:
@@ -78,9 +83,12 @@ class Campsite:
                     )
                     response_data = campsite_response.json()
                     for site in response_data["campsites"]:
+                        human_readable_campsite = response_data["campsites"][site][
+                            "site"
+                        ]
                         if not self._parsed_camp_grounds[camp_ground][
                             campground_id
-                        ].get(site, False):
+                        ].get(human_readable_campsite, False):
                             continue
                         availabilities = response_data["campsites"][site][
                             "availabilities"
@@ -89,15 +97,24 @@ class Campsite:
                         for single_date in self._daterange(starting_date, ending_date):
                             if availabilities.get(single_date) != "Available":
                                 all_days_available = False
+                                if self.debug:
+                                    print(
+                                        "no availabilities for",
+                                        starting_date,
+                                        ending_date,
+                                        camp_ground,
+                                        human_readable_campsite,
+                                    )
+                                break
+                        if all_days_available:
+                            if self.debug:
                                 print(
-                                    "no availabilities for",
+                                    "!Availabilities for",
                                     starting_date,
                                     ending_date,
                                     camp_ground,
-                                    site,
+                                    human_readable_campsite,
                                 )
-                                break
-                        if all_days_available:
                             self._send_ntfy_message(
                                 starting_date,
                                 ending_date,
@@ -105,11 +122,14 @@ class Campsite:
                                 response_data["campsites"][site]["site"],
                             )
                             self._parsed_camp_grounds[camp_ground][campground_id][
-                                site
+                                human_readable_campsite
                             ] = False
-
-            print("lowkey sleepin")
-            time.sleep(self.sleep_time)
+            if self.infinite_run:
+                if self.debug:
+                    print("sleeping...")
+                time.sleep(self.sleep_time)
+            else:
+                infinite_run = False
 
     def _daterange(self, start_date, end_date):
         start = datetime.strptime(start_date, "%Y-%m-%d")
@@ -123,9 +143,10 @@ class Campsite:
         return days
 
     def _send_ntfy_message(self, start_date, end_date, campground, site):
-        print(
-            f"Site {site} is available for reservation from {start_date} to {end_date} at {campground}"
-        )
+        if self.debug:
+            print(
+                f"Site {site} is available for reservation from {start_date} to {end_date} at {campground}"
+            )
         requests.post(
             f"{self.ntfy_url}/{self.ntfy_topic}",
             data=f"Site {site} is available for reservation from {start_date} to {end_date} at {campground}",
