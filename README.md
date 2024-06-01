@@ -54,7 +54,9 @@ This Python script checks for campsite availability on recreation.gov and sends 
 - `request_headers`: Headers for the HTTP requests (default provided).
 - `ntfy_url`: URL for the ntfy notification service (default: `https://ntfy.sh`).
 - `ntfy_topic`: Topic for ntfy notifications (default: `campsite`).
+- `infinite_run`: Keep checking until the program is stopped (default: True).
 - `sleep_time`: Time in seconds to wait between checks (default: 60).
+- `debug`: Print debug info (default: False).
 
 ## Example
 
