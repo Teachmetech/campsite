@@ -82,51 +82,52 @@ class Campsite:
                         headers=self.request_headers,
                     )
                     response_data = campsite_response.json()
-                    for site in response_data["campsites"]:
-                        human_readable_campsite = response_data["campsites"][site][
-                            "site"
-                        ]
-                        if not self._parsed_camp_grounds[camp_ground][
-                            campground_id
-                        ].get(human_readable_campsite, False):
-                            continue
-                        availabilities = response_data["campsites"][site][
-                            "availabilities"
-                        ]
-                        all_days_available = True
-                        for single_date in self._daterange(starting_date, ending_date):
-                            if availabilities.get(single_date) != "Available":
-                                all_days_available = False
-                                if self.debug:
-                                    print(
-                                        "no availabilities for",
-                                        starting_date,
-                                        ending_date,
-                                        camp_ground,
-                                        human_readable_campsite,
+                    try:
+                        for site in response_data["campsites"]:
+                            human_readable_campsite = response_data["campsites"][site][
+                                "site"
+                            ]
+                            if not self._parsed_camp_grounds[camp_ground][
+                                campground_id
+                            ].get(human_readable_campsite, False):
+                                continue
+                            availabilities = response_data["campsites"][site][
+                                "availabilities"
+                            ]
+                            all_days_available = True
+                            for single_date in self._daterange(
+                                starting_date, ending_date
+                            ):
+                                if availabilities.get(single_date) != "Available":
+                                    all_days_available = False
+                                    self._debug_print(
+                                        f"No availabilities for {starting_date}-{ending_date} in {camp_ground} at {human_readable_campsite} are found.",
                                     )
-                                break
-                        if all_days_available:
-                            if self.debug:
-                                print(
-                                    "!Availabilities for",
+                                    break
+                            if all_days_available:
+                                self._debug_print(
+                                    f"Availabilities for {starting_date}-{ending_date} in {camp_ground} at {human_readable_campsite} found.",
+                                )
+                                self._send_ntfy_message(
                                     starting_date,
                                     ending_date,
                                     camp_ground,
-                                    human_readable_campsite,
+                                    response_data["campsites"][site]["site"],
                                 )
-                            self._send_ntfy_message(
-                                starting_date,
-                                ending_date,
-                                camp_ground,
-                                response_data["campsites"][site]["site"],
+                                self._parsed_camp_grounds[camp_ground][campground_id][
+                                    human_readable_campsite
+                                ] = False
+                    except:
+                        self._debug_print(
+                            "The URL: "
+                            + self.recreation_api_url.format(
+                                campground_id,
+                                f"{starting_date_year}-{starting_date_month}-01",
                             )
-                            self._parsed_camp_grounds[camp_ground][campground_id][
-                                human_readable_campsite
-                            ] = False
+                            + " did not return expected JSON response."
+                        )
             if self.infinite_run:
-                if self.debug:
-                    print("sleeping...")
+                self._debug_print(f"sleeping...{self.sleep_time}")
                 time.sleep(self.sleep_time)
             else:
                 infinite_run = False
@@ -140,14 +141,18 @@ class Campsite:
             (start + timedelta(days=i)).strftime("%Y-%m-%dT00:00:00Z")
             for i in range(delta.days + 1)
         ]
+        self._debug_print(f"Parsed days: {days}")
         return days
 
     def _send_ntfy_message(self, start_date, end_date, campground, site):
-        if self.debug:
-            print(
-                f"Site {site} is available for reservation from {start_date} to {end_date} at {campground}"
-            )
+        self._debug_print(
+            f"Site {site} is available for reservation from {start_date} to {end_date} at {campground}"
+        )
         requests.post(
             f"{self.ntfy_url}/{self.ntfy_topic}",
             data=f"Site {site} is available for reservation from {start_date} to {end_date} at {campground}",
         )
+
+    def _debug_print(self, message):
+        if self.debug:
+            print(message)
